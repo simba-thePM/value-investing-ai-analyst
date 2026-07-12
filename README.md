@@ -67,9 +67,9 @@ User question + company + skill
    ```
 
    (Get a free key at https://aistudio.google.com/apikey — the app uses
-   `gemini-2.5-flash-lite` by default, Gemini's lowest-cost/lowest-latency
+   `gemini-3.1-flash-lite` by default, Gemini's lowest-cost/lowest-latency
    tier, which is a good fit for a light-traffic demo. Change `MODEL` in
-   `app/harness.py` to `gemini-2.5-flash` or `gemini-2.5-pro` if you want
+   `app/harness.py` to `gemini-3.1-flash` or `gemini-3.1-pro` if you want
    stronger reasoning at a higher cost.)
 
 3. Build the RAG vector store (run once, and again any time you edit files
