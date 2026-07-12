@@ -17,7 +17,7 @@ from app.skills_loader import load_skills
 # Flash-Lite is Gemini's lowest-cost, lowest-latency tier — a good fit for a
 # demo app with light traffic. Swap to "gemini-2.5-flash" or "gemini-2.5-pro"
 # for stronger (but pricier) reasoning if answer quality needs it.
-MODEL = "gemini-2.5-flash-lite"
+MODEL = "gemini-3.1-flash-lite"
 
 # Maps the company display name (as used in the RAG metadata / markdown H1)
 # to the name the MCP stock tools understand.
