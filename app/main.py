@@ -27,9 +27,9 @@ st.caption(
     "their actual filings and live market data."
 )
 
-if not os.environ.get("ANTHROPIC_API_KEY"):
+if not os.environ.get("GOOGLE_API_KEY"):
     st.warning(
-        "Set the `ANTHROPIC_API_KEY` environment variable before running queries. "
+        "Set the `GOOGLE_API_KEY` environment variable before running queries. "
         "See the README for setup instructions.",
         icon="⚠️",
     )
@@ -65,10 +65,10 @@ question = st.text_area(
 run = st.button("Analyze", type="primary")
 
 if run:
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        st.error("Missing ANTHROPIC_API_KEY — set it and reload the app.")
+    if not os.environ.get("GOOGLE_API_KEY"):
+        st.error("Missing GOOGLE_API_KEY — set it and reload the app.")
     else:
-        with st.spinner("Running skill → RAG retrieval → MCP tool calls → Claude..."):
+        with st.spinner("Running skill → RAG retrieval → MCP tool calls → Gemini..."):
             try:
                 result = run_query(company, skill_id, question)
             except Exception as e:
@@ -111,7 +111,7 @@ to it over the actual MCP protocol (stdio transport).
 
 **Harness** — `app/harness.py` orchestrates all of the above: picks the
 skill, retrieves context, calls tools, assembles a grounded prompt, and
-calls Claude. Expand "Reasoning trace" above to see every step.
+calls Gemini. Expand "Reasoning trace" above to see every step.
         """
     )
     st.caption("Data for the 5 companies is an illustrative sample corpus — swap in real annual report PDFs for production use.")

@@ -9,7 +9,7 @@ Titan).
 Ask a question, pick an analysis "skill," and the app shows not just the
 answer but the full reasoning trace: which skill was chosen, which filing
 excerpts were retrieved (RAG), which live market data was pulled (MCP), and
-how it was all assembled into the final Claude prompt.
+how it was all assembled into the final Gemini prompt.
 
 ## Architecture
 
@@ -24,7 +24,7 @@ User question + company + skill
         │                             (built from data/annual_reports/*.md)
         ├─► app/mcp_client.py      → calls mcp_server/stock_tools.py
         │                             over the real MCP protocol (stdio)
-        └─► anthropic SDK          → Claude generates the grounded answer
+        └─► google-genai SDK       → Gemini generates the grounded answer
         │
         ▼
    app/main.py (Streamlit UI) — shows answer + step-by-step trace
@@ -59,16 +59,18 @@ User question + company + skill
    pip install -r requirements.txt
    ```
 
-2. Set your Anthropic API key. Copy `.env.example` to `.env` and fill it
+2. Set your Google AI API key. Copy `.env.example` to `.env` and fill it
    in, or export it directly:
 
    ```bash
-   export ANTHROPIC_API_KEY=sk-ant-...
+   export GOOGLE_API_KEY=AIza...
    ```
 
-   (Get a key at https://console.anthropic.com — the app uses
-   `claude-sonnet-4-5-20250929` by default; change `MODEL` in
-   `app/harness.py` if you want a different model.)
+   (Get a free key at https://aistudio.google.com/apikey — the app uses
+   `gemini-2.5-flash-lite` by default, Gemini's lowest-cost/lowest-latency
+   tier, which is a good fit for a light-traffic demo. Change `MODEL` in
+   `app/harness.py` to `gemini-2.5-flash` or `gemini-2.5-pro` if you want
+   stronger reasoning at a higher cost.)
 
 3. Build the RAG vector store (run once, and again any time you edit files
    in `data/annual_reports/`):
@@ -102,13 +104,13 @@ This is a standard Streamlit app, so any of these work well for a free/cheap
 portfolio demo:
 
 - **Streamlit Community Cloud** (easiest): push this repo to GitHub, connect
-  it at share.streamlit.io, set `ANTHROPIC_API_KEY` as a secret in the app
+  it at share.streamlit.io, set `GOOGLE_API_KEY` as a secret in the app
   settings. The app self-bootstraps its vector store on first query if
   `vectorstore/` is empty, so no separate ingest step is required at
   deploy time. See `DEPLOY.md` for a full walkthrough.
 - **Render / Fly.io**: deploy as a standard Python web service; set the
   start command to `streamlit run app/main.py --server.port=$PORT
-  --server.address=0.0.0.0` and set `ANTHROPIC_API_KEY` as an environment
+  --server.address=0.0.0.0` and set `GOOGLE_API_KEY` as an environment
   variable.
 
 ## Known limitations (by design, to keep this a weekend-scoped demo)

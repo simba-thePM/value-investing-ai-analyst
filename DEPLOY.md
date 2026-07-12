@@ -3,9 +3,9 @@
 These steps assume you've unzipped `value-investor-ai.zip` somewhere on your
 machine and have a terminal open in that folder.
 
-## 1. Get an Anthropic API key
-If you don't already have one: go to https://console.anthropic.com,
-sign in, and create an API key under **API Keys**. Keep it handy for step 5.
+## 1. Get a Google AI API key
+If you don't already have one: go to https://aistudio.google.com/apikey,
+sign in, and create a free API key. Keep it handy for step 5.
 
 ## 2. Push the code to a new GitHub repo
 
@@ -47,7 +47,7 @@ step before deploying. Still, it's worth a quick local smoke test:
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-your-key-here
+export GOOGLE_API_KEY=your-key-here
 streamlit run app/main.py
 ```
 
@@ -64,7 +64,7 @@ and move to deployment.
 5. Click **Advanced settings** before deploying:
    - Under **Secrets**, add:
      ```
-     ANTHROPIC_API_KEY = "sk-ant-your-key-here"
+     GOOGLE_API_KEY = "your-key-here"
      ```
    - Python version: 3.11 (matches what this was built/tested against).
 6. Click **Deploy**. First build takes a few minutes (installing
@@ -85,6 +85,6 @@ deployed environment.
 - **MCP tool calls fail / time out** → Streamlit Cloud containers can be
   slow to spawn subprocesses on cold start; try the query again once the
   app has been running for a minute.
-- **`ANTHROPIC_API_KEY` not found** → double check the secret is saved
+- **`GOOGLE_API_KEY` not found** → double check the secret is saved
   under the app's settings (not just typed and not saved), and that the
-  key name matches exactly (`ANTHROPIC_API_KEY`).
+  key name matches exactly (`GOOGLE_API_KEY`).

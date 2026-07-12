@@ -7,13 +7,17 @@ can show exactly what happened, which is the whole point of this demo.
 import os
 import time
 
-import anthropic
+from google import genai
+from google.genai import types
 
 from app.rag import retrieve
 from app.mcp_client import call_tool
 from app.skills_loader import load_skills
 
-MODEL = "claude-sonnet-4-5-20250929"
+# Flash-Lite is Gemini's lowest-cost, lowest-latency tier — a good fit for a
+# demo app with light traffic. Swap to "gemini-2.5-flash" or "gemini-2.5-pro"
+# for stronger (but pricier) reasoning if answer quality needs it.
+MODEL = "gemini-2.5-flash-lite"
 
 # Maps the company display name (as used in the RAG metadata / markdown H1)
 # to the name the MCP stock tools understand.
@@ -104,16 +108,18 @@ def run_query(company_display_name: str, skill_id: str, user_question: str) -> d
         f"### User question:\n{user_question}"
     )
 
-    trace.append({"step": "4. Assembled prompt", "detail": "Skill instructions + retrieved context + live data sent to Claude."})
+    trace.append({"step": "4. Assembled prompt", "detail": "Skill instructions + retrieved context + live data sent to Gemini."})
 
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-    response = client.messages.create(
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    response = client.models.generate_content(
         model=MODEL,
-        max_tokens=1024,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_message}],
+        contents=user_message,
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=1024,
+        ),
     )
-    answer = "".join(block.text for block in response.content if hasattr(block, "text"))
+    answer = response.text
 
     trace.append({"step": "5. Answer generated", "detail": f"{time.time() - t0:.1f}s total"})
 
