@@ -13,7 +13,6 @@ production app would keep one long-lived session open instead.
 import os
 import sys
 import asyncio
-import io
 import json
 
 from mcp import ClientSession, StdioServerParameters
@@ -45,12 +44,12 @@ async def _call_tool_async(tool_name: str, arguments: dict) -> dict:
         command=sys.executable,
         args=[SERVER_SCRIPT],
     )
-    # Capture the server subprocess's stderr so that if it crashes on
-    # startup (missing dependency, import error, etc.) we can surface the
-    # real reason instead of just "TaskGroup" noise.
-    stderr_capture = io.StringIO()
+    # Note: not all versions of the `mcp` package's stdio_client() accept an
+    # `errlog` kwarg for capturing subprocess stderr, so we don't rely on
+    # that — the exception-unwrapping below is what actually surfaces the
+    # real error instead of the generic "TaskGroup" message.
     try:
-        async with stdio_client(server_params, errlog=stderr_capture) as (read, write):
+        async with stdio_client(server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 result = await session.call_tool(tool_name, arguments=arguments)
@@ -68,11 +67,7 @@ async def _call_tool_async(tool_name: str, arguments: dict) -> dict:
                             return {"raw": block.text}
                 return {}
     except BaseException as e:
-        detail = _flatten_exception(e)
-        stderr_text = stderr_capture.getvalue().strip()
-        if stderr_text:
-            detail += f" | server stderr: {stderr_text[-500:]}"
-        raise RuntimeError(detail) from e
+        raise RuntimeError(_flatten_exception(e)) from e
 
 
 async def _list_tools_async() -> list[str]:
