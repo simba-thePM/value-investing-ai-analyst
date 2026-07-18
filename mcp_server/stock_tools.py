@@ -17,10 +17,30 @@ Data source: yfinance (free, unofficial Yahoo Finance wrapper). Good enough
 for a portfolio demo; swap for a paid/official NSE feed for production use.
 """
 
+import sys
+import io
+import contextlib
+
 from mcp.server.fastmcp import FastMCP
 import yfinance as yf
 
 mcp = FastMCP("indian-stock-tools")
+
+
+@contextlib.contextmanager
+def _quiet_stdout():
+    """MCP's stdio transport uses stdout as the JSON-RPC channel — any stray
+    print()/warning that a dependency (yfinance in particular) writes to
+    stdout corrupts that stream and manifests upstream as an opaque
+    'unhandled errors in a TaskGroup' failure on the client side. Redirect
+    stdout to a buffer for the duration of the yfinance call so nothing but
+    our own return value ever reaches the real stdout."""
+    real_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        yield
+    finally:
+        sys.stdout = real_stdout
 
 # Friendly-name -> NSE ticker map so the LLM/user doesn't need to remember
 # Yahoo Finance's suffix convention.
@@ -55,10 +75,14 @@ def get_stock_price(company: str) -> dict:
         dict with ticker, currency, last_price, previous_close, day_change_pct.
     """
     ticker = _resolve_ticker(company)
-    t = yf.Ticker(ticker)
-    info = t.fast_info
-    last = info.get("last_price")
-    prev = info.get("previous_close")
+    try:
+        with _quiet_stdout():
+            t = yf.Ticker(ticker)
+            info = t.fast_info
+            last = info.get("last_price")
+            prev = info.get("previous_close")
+    except Exception as e:
+        return {"ticker": ticker, "error": f"{type(e).__name__}: {e}"}
     change_pct = None
     if last is not None and prev:
         change_pct = round((last - prev) / prev * 100, 2)
@@ -84,8 +108,12 @@ def get_financial_ratios(company: str) -> dict:
         market_cap, dividend_yield, and 52-week high/low.
     """
     ticker = _resolve_ticker(company)
-    t = yf.Ticker(ticker)
-    info = t.info  # slower, full fundamentals payload
+    try:
+        with _quiet_stdout():
+            t = yf.Ticker(ticker)
+            info = t.info  # slower, full fundamentals payload
+    except Exception as e:
+        return {"ticker": ticker, "error": f"{type(e).__name__}: {e}"}
 
     def pct(x):
         return round(x * 100, 2) if isinstance(x, (int, float)) else None
