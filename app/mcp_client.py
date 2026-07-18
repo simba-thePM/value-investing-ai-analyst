@@ -53,13 +53,23 @@ async def _call_tool_async(tool_name: str, arguments: dict) -> dict:
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 result = await session.call_tool(tool_name, arguments=arguments)
-                # MCP tool results come back as a list of content blocks; our
-                # tools return a single JSON-serializable dict via structured
-                # content, so unpack it accordingly.
-                if result.structuredContent is not None:
-                    return result.structuredContent
-                # Fallback: parse the first text block as JSON.
-                for block in result.content:
+                content_blocks = getattr(result, "content", None) or []
+                if getattr(result, "isError", False):
+                    error_text = "; ".join(
+                        getattr(block, "text", str(block)) for block in content_blocks
+                    )
+                    raise RuntimeError(f"Tool '{tool_name}' returned an error: {error_text}")
+                # MCP tool results come back as a list of content blocks. Newer
+                # versions of the `mcp` package additionally expose a parsed
+                # `structuredContent` dict directly, but not every installed
+                # version has that attribute — check with getattr rather than
+                # assuming it exists, and fall back to parsing the first text
+                # block as JSON (which is what our tools' dict return values
+                # get serialized to).
+                structured = getattr(result, "structuredContent", None)
+                if structured is not None:
+                    return structured
+                for block in content_blocks:
                     if hasattr(block, "text"):
                         try:
                             return json.loads(block.text)
